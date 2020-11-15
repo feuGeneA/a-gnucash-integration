@@ -1,0 +1,8 @@
+version: 2
+jobs:
+ build:
+   machine: true
+   steps:
+     - checkout
+     - run: docker build -t a-gnucash-integration:$CIRCLE_BRANCH .
+     - run: docker run --net=host a-gnucash-integration:$CIRCLE_BRANCH
