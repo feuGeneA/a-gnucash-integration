@@ -1,5 +1,5 @@
 FROM debian:buster-backports AS runtimeenv
-RUN apt-get update && apt-get -t buster-backports install --yes gnucash
+RUN apt-get update && apt-get -t buster-backports install --yes gnucash libdbd-pgsql
 
 FROM runtimeenv AS buildenv
 RUN apt-get update && apt-get -t buster-backports install --yes g++ cmake libglib2.0-dev

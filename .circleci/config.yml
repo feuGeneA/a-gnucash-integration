@@ -4,5 +4,6 @@ jobs:
    machine: true
    steps:
      - checkout
+     - run: cp docker-compose-postgres.yml ../docker-compose.yml && cd .. && docker-compose  up -d
      - run: docker build -t a-gnucash-integration:$CIRCLE_BRANCH .
      - run: docker run --net=host a-gnucash-integration:$CIRCLE_BRANCH
