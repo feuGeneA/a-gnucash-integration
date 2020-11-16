@@ -3,7 +3,7 @@
 #include <gnucash/gnc-engine.h>
 #include <gnucash/qofsession.h>
 
-const char* postgresUrl = "postgres://gnc:gnc@127.0.0.1:5432/gnucash";
+static const char* postgresUrl { "postgres://gnc:gnc@127.0.0.1:5432/gnucash" };
 
 using std::cout;
 using std::endl;
