@@ -8,44 +8,6 @@ const char* postgresUrl = "postgres://gnc:gnc@127.0.0.1:5432/gnucash";
 using std::cout;
 using std::endl;
 
-bool qof_error_encountered = false;
-
-void qof_error_check(QofSession *session, const char* func = "")
-{
-    while(
-        qof_session_events_pending(session) ||
-        qof_session_save_in_progress(session)
-    ) {
-        cout << "waiting..." << endl;
-        continue;
-    }
-
-    QofBackendError error = qof_session_get_error(session);
-    if (error != QofBackendError::ERR_BACKEND_NO_ERR)
-    {
-        cout << "qof session error message: "
-            << qof_session_get_error_message(session) << "(" << error << "). "
-            << "func: " << func << endl;
-        qof_error_encountered = true;
-    }
-}
-
-class QofSessionRAII {
-public:
-    QofSession *session;
-    QofSessionRAII()
-    {
-        session = qof_session_new(NULL);
-        qof_error_check(session, "qof_session_new");
-
-        qof_session_begin(session, postgresUrl, SessionOpenMode::SESSION_NEW_OVERWRITE);
-        qof_error_check(session, "qof_session_begin");
-    }
-    ~QofSessionRAII()
-    {
-    }
-};
-
 class GncEngineRAII {
 public:
     GncEngineRAII()
@@ -74,12 +36,26 @@ int main()
     qof_log_set_level ("qof", QOF_LOG_DEBUG);
     qof_log_set_level ("gnc", QOF_LOG_DEBUG);
 
-    {
+    struct QSErr { // qof session error
+        QofSession* session; // in an error state
+        const char* function; // qof_session_*, that induced the error
+    };
+
+    try {
         GncEngineRAII engine;
 
-        QofSessionRAII sessionRaii;
-        QofSession * session = sessionRaii.session;
+        auto session { qof_session_new(qof_book_new()) };
+        if(qof_session_get_error(session)) throw QSErr { session, "new" };
+
+        qof_session_begin(session, postgresUrl, SessionOpenMode::SESSION_NEW_OVERWRITE);
+        if(qof_session_get_error(session)) throw QSErr { session, "begin" };
+    } catch(QSErr err) {
+        cerr << string{"qof session error message: "} <<
+            qof_session_get_error_message(err.session) << "(" <<
+            qof_session_get_error(err.session) <<
+            "). from function qof_session_" << err.function << endl;
+        return 1;
     }
 
-    return qof_error_encountered;
+    return 0;
 }
