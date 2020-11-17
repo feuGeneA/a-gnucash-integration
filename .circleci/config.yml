@@ -1,9 +1,52 @@
 version: 2
 jobs:
  build:
-   machine: true
+   machine:
+       # specify a newer circleci base image, to get a more recent version of
+       # Docker, so we'll have Buildkit.
+       image: ubuntu-2004:202010-01
+   environment:
+       # for caching docker build targets per
+       # https://testdriven.io/blog/faster-ci-builds-with-docker-cache/
+       CACHE_IMAGE: feugenea/ci-cache
+       DOCKER_BUILDKIT: 1
    steps:
      - checkout
-     - run: cp docker-compose-postgres.yml ../docker-compose.yml && cd .. && docker-compose  up -d
-     - run: docker build -t a-gnucash-integration:$CIRCLE_BRANCH .
-     - run: docker run --net=host a-gnucash-integration:$CIRCLE_BRANCH
+     - run: docker --version
+     - run:
+         name: Log in to docker hub
+         command: docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD
+     - run:
+         name: Start a PostgreSQL server
+         command: cp docker-compose-postgres.yml ../docker-compose.yml && cd .. && docker-compose  up -d
+     - run:
+         name: Build the GnuCash development environment
+         command: |
+             docker build \
+                --target gnucashbuildenv \
+                --tag        ${CACHE_IMAGE}:${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BRANCH}-gnucashbuildenv \
+                --cache-from ${CACHE_IMAGE}:${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BRANCH}-gnucashbuildenv \
+                --build-arg BUILDKIT_INLINE_CACHE=1 \
+                .
+     - run:
+         name: Push gnucash build environment image to cache
+         command: docker push ${CACHE_IMAGE}:${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BRANCH}-gnucashbuildenv
+     - run:
+         name: Build this branch
+         command: |
+             docker build \
+                --tag        ${CACHE_IMAGE}:${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BRANCH}-${CIRCLE_SHA1} \
+                --tag        ${CACHE_IMAGE}:${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BRANCH} \
+                --cache-from ${CACHE_IMAGE}:${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BRANCH} \
+                --cache-from ${CACHE_IMAGE}:${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BRANCH}-gnucashbuildenv \
+                --build-arg BUILDKIT_INLINE_CACHE=1 \
+                .
+     - run:
+         name: Push built image to cache
+         command: docker push ${CACHE_IMAGE}:${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BRANCH}
+     - run:
+         name: Push built image to cache
+         command: docker push ${CACHE_IMAGE}:${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BRANCH}-${CIRCLE_SHA1}
+     - run:
+         name: Run the built executable
+         command: docker run --net=host ${CACHE_IMAGE}:${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BRANCH}-${CIRCLE_SHA1}
