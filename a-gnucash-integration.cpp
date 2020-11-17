@@ -13,7 +13,7 @@ public:
     GncEngineRAII()
     {
         cout << "initializing engine..." << endl;
-        gnc_engine_init(0, { NULL });
+        gnc_engine_init(0, nullptr);
         while (!gnc_engine_is_initialized()) {
             cout << "waiting for engine to initialize..." << endl;
         }
