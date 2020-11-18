@@ -32,11 +32,8 @@ public:
 
 int main()
 {
-    qof_log_init();
-
-    qof_log_set_level ("", QOF_LOG_DEBUG);
-    qof_log_set_level ("qof", QOF_LOG_DEBUG);
-    qof_log_set_level ("gnc", QOF_LOG_DEBUG);
+    for (auto logModule : { "", "qof", "gnc" })
+        qof_log_set_level(logModule, QOF_LOG_DEBUG);
 
     struct QSErr { // qof session error
         QofSession* session; // in an error state
