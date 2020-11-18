@@ -5,8 +5,10 @@
 
 static const char* postgresUrl { "postgres://gnc:gnc@127.0.0.1:5432/gnucash" };
 
+using std::cerr;
 using std::cout;
 using std::endl;
+using std::string;
 
 class GncEngineRAII {
 public:
@@ -14,8 +16,8 @@ public:
     {
         cout << "initializing engine..." << endl;
         gnc_engine_init(0, nullptr);
-        while (!gnc_engine_is_initialized()) {
-            cout << "waiting for engine to initialize..." << endl;
+        if (!gnc_engine_is_initialized()) {
+            throw string("Engine initialization failed?");
         }
     };
     ~GncEngineRAII()
@@ -54,6 +56,9 @@ int main()
             qof_session_get_error_message(err.session) << "(" <<
             qof_session_get_error(err.session) <<
             "). from function qof_session_" << err.function << endl;
+        return 1;
+    } catch(string s) {
+        cerr << "caught string '" << s << "'" << endl;
         return 1;
     }
 
