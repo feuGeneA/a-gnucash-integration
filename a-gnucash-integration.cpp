@@ -1,4 +1,6 @@
+#include <chrono>
 #include <iostream>
+#include <thread>
 
 #include <gnucash/gnc-engine.h>
 #include <gnucash/qofsession.h>
@@ -26,6 +28,7 @@ public:
         gnc_engine_shutdown();
         while (gnc_engine_is_initialized()) {
             cout << "waiting for engine to shut down..." << endl;
+            std::this_thread::sleep_for(std::chrono::seconds(2));
         }
     }
 };
