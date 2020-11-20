@@ -43,11 +43,21 @@ int main()
         const char* function; // qof_session_*, that induced the error
     };
 
+    struct CommitError {
+        QofSession* session;
+        QofBackendError error;
+    };
+
     try {
         GncEngineRAII engine;
 
         auto session { qof_session_new(qof_book_new()) };
         if(qof_session_get_error(session)) throw QSErr { session, "new" };
+
+        gnc_engine_add_commit_error_callback(
+            [](void* s, QofBackendError e){
+                throw CommitError {static_cast<QofSession*>(s), e }; },
+            session);
 
         qof_session_begin(session, postgresUrl, SessionOpenMode::SESSION_NEW_OVERWRITE);
         if(qof_session_get_error(session)) throw QSErr { session, "begin" };
@@ -59,6 +69,11 @@ int main()
         return 1;
     } catch(string s) {
         cerr << "caught string '" << s << "'" << endl;
+        return 1;
+    } catch(CommitError e) {
+        cerr << string{"caught CommitError sessionErrMsg("} <<
+            qof_session_get_error_message(e.session) << "), QofBackendError="
+            << e.error << endl;
         return 1;
     }
 
