@@ -43,11 +43,6 @@ public:
     }
     ~QofSessionRAII()
     {
-        qof_session_end(session);
-        qof_error_check(session, "qof_session_end");
-
-        qof_session_destroy(session);
-        qof_error_check(session, "qof_session_destroy");
     }
 };
 
