@@ -2,6 +2,7 @@
 #include <iostream>
 #include <thread>
 
+#include <gnucash/Account.h>
 #include <gnucash/gnc-engine.h>
 #include <gnucash/qofsession.h>
 
@@ -70,6 +71,8 @@ int main()
 
         qof_book_set_backend(book, qof_session_get_backend(session));
         if(qof_session_get_error(session)) throw QSErr { session, "get_backend" };
+
+        auto rootAccount { gnc_book_get_root_account(book) };
     } catch(QSErr err) {
         cerr << string{"qof session error message: "} <<
             qof_session_get_error_message(err.session) << "(" <<
