@@ -51,7 +51,9 @@ int main()
     try {
         GncEngineRAII engine;
 
-        auto session { qof_session_new(qof_book_new()) };
+        auto book { qof_book_new() };
+
+        auto session { qof_session_new(book) };
         if(qof_session_get_error(session)) throw QSErr { session, "new" };
 
         gnc_engine_add_commit_error_callback(
@@ -65,6 +67,9 @@ int main()
             SessionOpenMode::SESSION_NEW_OVERWRITE
         );
         if(qof_session_get_error(session)) throw QSErr { session, "begin" };
+
+        qof_book_set_backend(book, qof_session_get_backend(session));
+        if(qof_session_get_error(session)) throw QSErr { session, "get_backend" };
     } catch(QSErr err) {
         cerr << string{"qof session error message: "} <<
             qof_session_get_error_message(err.session) << "(" <<
