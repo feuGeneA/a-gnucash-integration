@@ -59,7 +59,11 @@ int main()
                 throw CommitError {static_cast<QofSession*>(s), e }; },
             session);
 
-        qof_session_begin(session, postgresUrl, SessionOpenMode::SESSION_NEW_OVERWRITE);
+        qof_session_begin(
+            session,
+            postgresUrl,
+            SessionOpenMode::SESSION_NEW_OVERWRITE
+        );
         if(qof_session_get_error(session)) throw QSErr { session, "begin" };
     } catch(QSErr err) {
         cerr << string{"qof session error message: "} <<
