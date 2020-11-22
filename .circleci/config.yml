@@ -49,4 +49,4 @@ jobs:
          command: docker push ${CACHE_IMAGE}:${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BRANCH}-${CIRCLE_SHA1}
      - run:
          name: Run the built executable
-         command: docker run --net=host ${CACHE_IMAGE}:${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BRANCH}-${CIRCLE_SHA1}
+         command: sh -c "docker run --net=host ${CACHE_IMAGE}:${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BRANCH}-${CIRCLE_SHA1} || docker exec -e PGPASSWORD=gnc circleci_postgres_1 psql -h localhost -U gnc gnucash -c '\dt' -c 'select * from gnclock;'; exit 1"
