@@ -1,0 +1,43 @@
+diff --git a/libgnucash/backend/sql/gnc-sql-backend.cpp b/libgnucash/backend/sql/gnc-sql-backend.cpp
+index 7fcca7f7a..d926910a1 100644
+--- a/libgnucash/backend/sql/gnc-sql-backend.cpp
++++ b/libgnucash/backend/sql/gnc-sql-backend.cpp
+@@ -571,7 +571,10 @@ GncSqlBackend::commit (QofInstance* inst)
+     g_return_if_fail (inst != NULL);
+     g_return_if_fail (m_conn != nullptr);
+ 
+-    if (qof_book_is_readonly(m_book))
++    DEBUG("m_book=%p", m_book);
++    QofBook* book { m_book ? m_book : qof_instance_get_book(inst) };
++    DEBUG("book=%p", book);
++    if (qof_book_is_readonly(book))
+     {
+         set_error (ERR_BACKEND_READONLY);
+         (void)m_conn->rollback_transaction ();
+@@ -589,7 +592,7 @@ GncSqlBackend::commit (QofInstance* inst)
+     if (strcmp (inst->e_type, "PriceDB") == 0)
+     {
+         qof_instance_mark_clean (inst);
+-        qof_book_mark_session_saved (m_book);
++        qof_book_mark_session_saved (book);
+         return;
+     }
+ 
+@@ -627,7 +630,7 @@ GncSqlBackend::commit (QofInstance* inst)
+         (void)m_conn->rollback_transaction ();
+ 
+         // Don't let unknown items still mark the book as being dirty
+-        qof_book_mark_session_saved(m_book);
++        qof_book_mark_session_saved(book);
+         qof_instance_mark_clean (inst);
+         LEAVE ("Rolled back - unknown object type");
+         return;
+@@ -644,7 +647,7 @@ GncSqlBackend::commit (QofInstance* inst)
+ 
+     (void)m_conn->commit_transaction ();
+ 
+-    qof_book_mark_session_saved(m_book);
++    qof_book_mark_session_saved(book);
+     qof_instance_mark_clean (inst);
+ 
+     LEAVE ("");

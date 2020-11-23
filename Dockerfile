@@ -56,7 +56,9 @@ RUN cmake -DCMAKE_INSTALL_PREFIX=/opt/gnucash -DCMAKE_BUILD_TYPE=debug ../gnucas
 # .dockerignore.
 # COPY ./gnucash /home/root/gnucash_modded
 # RUN cp -uR /home/root/gnucash_modded/* /home/root/gnucash
-# RUN make && make install
+COPY ./gnc-patch-* /home/root/
+RUN cd ../gnucash; git apply ../gnc-patch-1-*
+RUN make && make install
 
 # work around what seems to be a bug in gnucash:
 # following replacement needs to happen for external clients of this header, but cannot happen before building gnucash, or you'll see:
